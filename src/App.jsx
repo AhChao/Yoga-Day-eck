@@ -1,19 +1,30 @@
-import { useState, useEffect } from 'react'
-import { Bars3Icon, XMarkIcon, PlusIcon, PencilIcon, TrashIcon, ArrowsUpDownIcon } from '@heroicons/react/24/outline'
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
-import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
+import { Fragment, useState, useEffect } from 'react'
+import { Dialog, Transition } from '@headlessui/react'
+import {
+  Bars3Icon,
+  XMarkIcon,
+  PlusIcon,
+  PencilIcon,
+  TrashIcon,
+  ArrowsUpDownIcon,
+  ClockIcon,
+} from '@heroicons/react/24/outline'
+import { DndContext, useSensors, useSensor, PointerSensor, KeyboardSensor, closestCenter, useDraggable, useDroppable } from '@dnd-kit/core'
+import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 
 function SortableAsanaCard({ asana, isEditing, onEdit, onUpdate, onDelete, onImageUpload, availableTags }) {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: asana.id })
-  
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: asana.id })
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition
   }
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} className="yoga-card relative group">
+    <div
+      ref={setNodeRef}
+      style={style} {...attributes} className="yoga-card relative group">
       {isEditing ? (
         <div className="space-y-4">
           <input
@@ -283,15 +294,156 @@ function TagBadge({ tag, onRemove, onClick, className = '' }) {
   )
 }
 
+function FlowCard({ flow, onEdit, onDelete, asanas, availableAsanas, onUpdateFlow, isEditing }) {
+  const { isOver, setNodeRef } = useDroppable({
+    id: `flow-${flow.id}`,
+    data: {
+      flowId: flow.id,
+      accepts: 'asana'
+    }
+  })
+
+  if (isEditing) {
+    return (
+      <div className="p-4 bg-white rounded-lg shadow space-y-4">
+        <div className="space-y-4">
+          <input
+            type="text"
+            value={flow.name}
+            onChange={(e) => onUpdateFlow(flow.id, { name: e.target.value })}
+            className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+            placeholder="Flow name"
+          />
+          <div className="flex gap-2">
+            <input
+              type="number"
+              value={flow.duration}
+              onChange={(e) => onUpdateFlow(flow.id, { duration: parseInt(e.target.value) || 0 })}
+              className="block w-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+              placeholder="Duration"
+              min="0"
+            />
+            <span className="self-center text-gray-500">minutes</span>
+          </div>
+          <textarea
+            value={flow.description}
+            onChange={(e) => onUpdateFlow(flow.id, { description: e.target.value })}
+            className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+            placeholder="Flow description"
+            rows={3}
+          />
+          <TagInput
+            value={flow.tags}
+            availableTags={availableTags}
+            onChange={(newTags) => onUpdateFlow(flow.id, { tags: newTags })}
+          />
+        </div>
+        <div className="flex justify-end gap-2">
+          <button
+            onClick={() => onEdit(null)}
+            className="px-3 py-1.5 text-sm font-medium text-gray-700 hover:text-gray-800"
+          >
+            Done
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div 
+      ref={setNodeRef}
+      className={`p-4 bg-white rounded-lg shadow ${isOver ? 'ring-2 ring-blue-500' : ''}`}
+    >
+      <div className="flex justify-between items-start mb-4">
+        <div>
+          <h3 className="text-xl font-semibold">{flow.name}</h3>
+          {flow.tags?.length > 0 && (
+            <div className="mt-1 flex flex-wrap gap-1">
+              {flow.tags.map(tag => (
+                <TagBadge
+                  key={tag}
+                  tag={tag}
+                  className="bg-blue-50 text-blue-700 text-xs"
+                />
+              ))}
+            </div>
+          )}
+          <div className="mt-2 text-sm text-gray-500">{flow.duration} minutes</div>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => onEdit(flow.id)}
+            className="p-1 rounded hover:bg-gray-100"
+          >
+            <PencilIcon className="h-5 w-5 text-gray-400" />
+          </button>
+          <button
+            onClick={() => onDelete(flow.id)}
+            className="p-1 rounded hover:bg-gray-100"
+          >
+            <TrashIcon className="h-5 w-5 text-gray-400" />
+          </button>
+        </div>
+      </div>
+      <p className="text-gray-600 mb-4">{flow.description}</p>
+      <div className="space-y-2">
+        {flow.asanaIds.map((asanaId, index) => {
+          const asana = asanas.find(a => a.id === asanaId)
+          if (!asana) return null
+          return (
+            <div key={asanaId} className="flex items-center gap-2">
+              <div className="text-gray-400">{index + 1}.</div>
+              <div className="flex-1 p-2 bg-gray-50 rounded">
+                <div className="font-medium">{asana.name}</div>
+                {asana.tags?.length > 0 && (
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {asana.tags.map(tag => (
+                      <TagBadge
+                        key={tag}
+                        tag={tag}
+                        className="bg-blue-50 text-blue-700 text-xs"
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={() => {
+                  onUpdateFlow(flow.id, {
+                    asanaIds: flow.asanaIds.filter(id => id !== asanaId)
+                  })
+                }}
+                className="p-1 rounded hover:bg-gray-100"
+              >
+                <XMarkIcon className="h-5 w-5 text-gray-400" />
+              </button>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 function App() {
+  const [activeTab, setActiveTab] = useState('cards') // 'cards' or 'flows'
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [asanas, setAsanas] = useState(() => {
     const savedAsanas = localStorage.getItem('asanas')
     const parsed = savedAsanas ? JSON.parse(savedAsanas) : []
-    // Ensure all asanas have a tags array
     return parsed.map(asana => ({
       ...asana,
       tags: asana.tags || []
+    }))
+  })
+  const [flows, setFlows] = useState(() => {
+    const savedFlows = localStorage.getItem('flows')
+    const parsed = savedFlows ? JSON.parse(savedFlows) : []
+    return parsed.map(flow => ({
+      ...flow,
+      tags: flow.tags || [],
+      asanaIds: flow.asanaIds || []
     }))
   })
   const [tags, setTags] = useState(() => {
@@ -300,6 +452,7 @@ function App() {
   })
   const [selectedTags, setSelectedTags] = useState([])
   const [editingId, setEditingId] = useState(null)
+  const [editingFlowId, setEditingFlowId] = useState(null)
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -313,21 +466,33 @@ function App() {
   }, [asanas])
 
   useEffect(() => {
+    localStorage.setItem('flows', JSON.stringify(flows))
+  }, [flows])
+
+  useEffect(() => {
     localStorage.setItem('tags', JSON.stringify(tags))
   }, [tags])
 
   const handleDragEnd = (event) => {
     const { active, over } = event
-    if (active.id !== over.id) {
+
+    if (!over) return
+
+    if (over.data?.current?.accepts === 'asana') {
+      // Dropping an asana into a flow
+      const flowId = over.data.current.flowId
+      const flow = flows.find(f => f.id === flowId)
+      if (flow && !flow.asanaIds.includes(active.id)) {
+        updateFlow(flowId, {
+          asanaIds: [...flow.asanaIds, active.id]
+        })
+      }
+    } else if (active.id !== over.id) {
+      // Reordering asanas in the cards view
       setAsanas((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id)
-        const newIndex = items.findIndex((item) => item.id === over.id)
-
-        const newItems = [...items]
-        const [removed] = newItems.splice(oldIndex, 1)
-        newItems.splice(newIndex, 0, removed)
-
-        return newItems
+        const oldIndex = items.findIndex(i => i.id === active.id)
+        const newIndex = items.findIndex(i => i.id === over.id)
+        return arrayMove(items, oldIndex, newIndex)
       })
     }
   }
@@ -347,6 +512,32 @@ function App() {
     }
     setAsanas([...asanas, newAsana])
     setEditingId(newAsana.id)
+  }
+
+  const addFlow = () => {
+    const newFlow = {
+      id: Date.now(),
+      name: 'New Flow',
+      description: 'Click to add description',
+      duration: 30,
+      tags: [],
+      asanaIds: []
+    }
+    setFlows([...flows, newFlow])
+    setEditingFlowId(newFlow.id)
+  }
+
+  const updateFlow = (id, updates) => {
+    setFlows(flows.map(flow =>
+      flow.id === id ? { ...flow, ...updates } : flow
+    ))
+  }
+
+  const deleteFlow = (id) => {
+    setFlows(flows.filter(flow => flow.id !== id))
+    if (editingFlowId === id) {
+      setEditingFlowId(null)
+    }
   }
 
   const updateAsana = (id, updates) => {
@@ -372,137 +563,194 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      {/* Mobile menu button */}
-      <button
-        className="fixed top-4 left-4 z-50 md:hidden bg-white p-2 rounded-md"
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-      >
-        {sidebarOpen ? (
-          <XMarkIcon className="h-6 w-6" />
-        ) : (
-          <Bars3Icon className="h-6 w-6" />
-        )}
-      </button>
+        {/* Mobile menu button */}
+        <button
+          className="fixed top-4 left-4 z-50 md:hidden bg-white p-2 rounded-md"
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+        >
+          {sidebarOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
+        </button>
 
-      {/* Sidebar */}
-      <div
-        className={`fixed inset-y-0 left-0 z-40 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
-      >
-        <div className="p-6">
-          <h2 className="text-2xl font-bold mb-6">Asana List</h2>
-          <nav>
-            {asanas.map(asana => (
-              <div key={asana.id} className="mb-3 p-3 bg-gray-50 rounded-md hover:bg-gray-100 cursor-pointer">
-                {asana.name}
-              </div>
-            ))}
-          </nav>
-        </div>
-      </div>
-
-      {/* Main content */}
-      <div className="md:pl-64">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-12">
-          {/* Tags Management */}
-          <div className="mb-8 space-y-4">
-            <h3 className="text-lg font-semibold">Tags</h3>
-            <TagInput
-              availableTags={tags}
-              onCreateTag={(newTag) => {
-                setTags(prevTags => [...prevTags, newTag])
-              }}
-              onRemoveTag={(tagToRemove) => {
-                setTags(prevTags => prevTags.filter(t => t !== tagToRemove))
-                setSelectedTags(prevSelected => prevSelected.filter(t => t !== tagToRemove))
-                // Remove tag from all asanas
-                setAsanas(prevAsanas => prevAsanas.map(asana => ({
-                  ...asana,
-                  tags: asana.tags.filter(t => t !== tagToRemove)
-                })))
-              }}
-              onRenameTag={(oldTag, newTag) => {
-                if (!tags.includes(newTag)) {
-                  setTags(prevTags => prevTags.map(t => t === oldTag ? newTag : t))
-                  setSelectedTags(prevSelected => prevSelected.map(t => t === oldTag ? newTag : t))
-                  // Update tag in all asanas
-                  setAsanas(prevAsanas => prevAsanas.map(asana => ({
-                    ...asana,
-                    tags: asana.tags.map(t => t === oldTag ? newTag : t)
-                  })))
-                }
-              }}
-            />
-            <div className="flex flex-wrap gap-2">
-              {tags.map(tag => (
-                <TagBadge
-                  key={tag}
-                  tag={tag}
-                  className={`${selectedTags.includes(tag) 
-                    ? 'bg-blue-100 text-blue-800 border-blue-300' 
-                    : 'bg-gray-100 text-gray-800 border-gray-300'} 
-                    cursor-pointer border hover:bg-opacity-75`}
-                  onRemove={
-                    !asanas.some(a => a.tags?.includes(tag)) 
-                      ? () => {
-                          setTags(prevTags => prevTags.filter(t => t !== tag));
-                          setSelectedTags(prevSelected => prevSelected.filter(t => t !== tag));
-                        }
-                      : undefined
-                  }
-                  onClick={(e) => {
-                    e.preventDefault()
-                    setSelectedTags(prev =>
-                      prev.includes(tag)
-                        ? prev.filter(t => t !== tag)
-                        : [...prev, tag]
-                    )
-                  }}
-                />
-              ))}
+        {/* Sidebar */}
+        <div
+          className={`fixed inset-y-0 left-0 z-40 w-64 bg-white transform transition-transform duration-300 ease-in-out md:translate-x-0 ${
+            sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
+        >
+          <div className="h-full flex flex-col">
+            <div className="flex-1 overflow-y-auto p-4">
+              <h2 className="text-2xl font-bold mb-4">Yoga Day</h2>
+              {/* Add sidebar content here */}
             </div>
           </div>
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              <SortableContext
-                items={asanas.map(a => a.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                {asanas
-                  .filter(asana => 
-                    selectedTags.length === 0 || 
-                    selectedTags.every(tag => asana.tags?.includes(tag))
-                  )
-                  .map(asana => (
-                    <SortableAsanaCard
-                      key={asana.id}
-                      asana={asana}
-                      isEditing={editingId === asana.id}
-                      onEdit={setEditingId}
-                      onUpdate={updateAsana}
-                      onDelete={deleteAsana}
-                      onImageUpload={handleImageUpload}
-                      availableTags={tags}
-                    />
-                  ))}
-              </SortableContext>
+        </div>
+
+        {/* Main content */}
+        <div className="md:pl-64">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-12">
+            {/* Tabs */}
+            <div className="border-b border-gray-200 mb-8">
+              <nav className="-mb-px flex space-x-8">
+                <button
+                  onClick={() => setActiveTab('cards')}
+                  className={`${
+                    activeTab === 'cards'
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  } whitespace-nowrap pb-4 px-1 border-b-2 font-medium`}
+                >
+                  Cards
+                </button>
+                <button
+                  onClick={() => setActiveTab('flows')}
+                  className={`${
+                    activeTab === 'flows'
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  } whitespace-nowrap pb-4 px-1 border-b-2 font-medium`}
+                >
+                  Flows
+                </button>
+              </nav>
             </div>
-          </DndContext>
-          
-          {/* Add new asana card */}
-          <button
-            onClick={addAsana}
-            className="mt-6 w-full border-2 border-dashed border-gray-300 rounded-lg p-4 h-[200px] flex items-center justify-center hover:border-gray-400 transition-colors duration-200"
-          >
-            <PlusIcon className="h-12 w-12 text-gray-400" />
-          </button>
+
+            {/* Tags Management */}
+            <div className="mb-8 space-y-4">
+              <h3 className="text-lg font-semibold">Tags</h3>
+              <TagInput
+                availableTags={tags}
+                onCreateTag={(newTag) => {
+                  setTags((prevTags) => [...prevTags, newTag]);
+                }}
+                onRemoveTag={(tagToRemove) => {
+                  setTags((prevTags) => prevTags.filter((t) => t !== tagToRemove));
+                  setSelectedTags((prevSelected) => prevSelected.filter((t) => t !== tagToRemove));
+                  setAsanas((prevAsanas) =>
+                    prevAsanas.map((asana) => ({
+                      ...asana,
+                      tags: asana.tags.filter((t) => t !== tagToRemove),
+                    }))
+                  );
+                }}
+                onRenameTag={(oldTag, newTag) => {
+                  if (!tags.includes(newTag)) {
+                    setTags((prevTags) => prevTags.map((t) => (t === oldTag ? newTag : t)));
+                    setSelectedTags((prevSelected) => prevSelected.map((t) => (t === oldTag ? newTag : t)));
+                    setAsanas((prevAsanas) =>
+                      prevAsanas.map((asana) => ({
+                        ...asana,
+                        tags: asana.tags.map((t) => (t === oldTag ? newTag : t)),
+                      }))
+                    );
+                  }
+                }}
+              />
+              <div className="flex flex-wrap gap-2">
+                {tags.map((tag) => (
+                  <TagBadge
+                    key={tag}
+                    tag={tag}
+                    className={`${
+                      selectedTags.includes(tag)
+                        ? 'bg-blue-100 text-blue-800 border-blue-300'
+                        : 'bg-gray-100 text-gray-800 border-gray-300'
+                    } cursor-pointer border hover:bg-opacity-75`}
+                    onRemove={
+                      !asanas.some((a) => a.tags?.includes(tag))
+                        ? () => {
+                            setTags((prevTags) => prevTags.filter((t) => t !== tag));
+                            setSelectedTags((prevSelected) => prevSelected.filter((t) => t !== tag));
+                          }
+                        : undefined
+                    }
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setSelectedTags((prev) =>
+                        prev.includes(tag)
+                          ? prev.filter((t) => t !== tag)
+                          : [...prev, tag]
+                      );
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {activeTab === 'cards' ? (
+              <>
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <SortableContext
+                      items={asanas.map((a) => a.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      {asanas
+                        .filter((asana) =>
+                          selectedTags.length === 0 || selectedTags.every((tag) => asana.tags?.includes(tag))
+                        )
+                        .map((asana) => (
+                          <SortableAsanaCard
+                            key={asana.id}
+                            asana={asana}
+                            isEditing={editingId === asana.id}
+                            onEdit={setEditingId}
+                            onUpdate={updateAsana}
+                            onDelete={deleteAsana}
+                            onImageUpload={handleImageUpload}
+                            availableTags={tags}
+                          />
+                        ))}
+                    </SortableContext>
+                  </div>
+                </DndContext>
+
+                {/* Add new asana card */}
+                <button
+                  onClick={addAsana}
+                  className="mt-6 w-full border-2 border-dashed border-gray-300 rounded-lg p-4 h-[200px] flex items-center justify-center hover:border-gray-400 transition-colors duration-200"
+                >
+                  <PlusIcon className="h-12 w-12 text-gray-400" />
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 gap-6">
+                  {flows
+                    .filter((flow) =>
+                      selectedTags.length === 0 || selectedTags.every((tag) => flow.tags?.includes(tag))
+                    )
+                    .map((flow) => (
+                      <FlowCard
+                        key={flow.id}
+                        flow={flow}
+                        onEdit={setEditingFlowId}
+                        onDelete={deleteFlow}
+                        asanas={asanas}
+                        availableAsanas={asanas.filter(asana => !flow.asanaIds.includes(asana.id))}
+                        onUpdateFlow={updateFlow}
+                        isEditing={editingFlowId === flow.id}
+                        availableTags={tags}
+                      />
+                    ))}
+                </div>
+
+                {/* Add new flow */}
+                <button
+                  onClick={addFlow}
+                  className="mt-6 w-full border-2 border-dashed border-gray-300 rounded-lg p-4 h-[100px] flex items-center justify-center hover:border-gray-400 transition-colors duration-200"
+                >
+                  <PlusIcon className="h-12 w-12 text-gray-400" />
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </div>
-    </div>
-  )
+  );
 }
 
-export default App
+export default App;
