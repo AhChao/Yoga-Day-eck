@@ -451,7 +451,7 @@ function App() {
     return savedTags ? JSON.parse(savedTags) : []
   })
   const [selectedTags, setSelectedTags] = useState([])
-  const [editingId, setEditingId] = useState(null)
+  const [editingAsanaId, setEditingAsanaId] = useState(null)
   const [editingFlowId, setEditingFlowId] = useState(null)
 
   const sensors = useSensors(
