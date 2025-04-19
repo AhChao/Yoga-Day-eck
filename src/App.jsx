@@ -166,7 +166,7 @@ function SortableAsanaCard({ asana, isEditing, onEdit, onUpdate, onDelete, onIma
   )
 }
 
-function TagInput({ availableTags, onCreateTag }) {
+function TagInput({ availableTags, onCreateTag, onRemoveTag, onRenameTag }) {
   const [input, setInput] = useState('')
 
   const handleSubmit = (e) => {
@@ -179,20 +179,61 @@ function TagInput({ availableTags, onCreateTag }) {
     }
   }
 
+  const handleRemove = () => {
+    const trimmedInput = input.trim()
+    if (trimmedInput && availableTags.includes(trimmedInput)) {
+      if (window.confirm(`Are you sure you want to remove the tag "${trimmedInput}"? This will remove it from all cards.`)) {
+        onRemoveTag(trimmedInput)
+        setInput('')
+      }
+    }
+  }
+
+  const handleRename = () => {
+    const trimmedInput = input.trim()
+    if (trimmedInput && availableTags.includes(trimmedInput)) {
+      const newName = window.prompt(`Enter new name for tag "${trimmedInput}":`, trimmedInput)
+      if (newName && newName.trim() && newName.trim() !== trimmedInput) {
+        onRenameTag(trimmedInput, newName.trim())
+        setInput('')
+      }
+    }
+  }
+
   return (
     <form onSubmit={handleSubmit} className="flex gap-2 items-center">
       <input
         type="text"
         value={input}
         onChange={(e) => setInput(e.target.value)}
-        placeholder="Add new tag"
+        placeholder="Tag name"
         className="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+        list="available-tags"
       />
+      <datalist id="available-tags">
+        {availableTags.map(tag => (
+          <option key={tag} value={tag} />
+        ))}
+      </datalist>
       <button
         type="submit"
         className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
       >
         Add
+      </button>
+      <button
+        type="button"
+        onClick={handleRename}
+        className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+      >
+        Rename
+      </button>
+      <button
+        type="button"
+        onClick={handleRemove}
+        className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+      >
+        Remove
       </button>
     </form>
   )
@@ -350,6 +391,26 @@ function App() {
               availableTags={tags}
               onCreateTag={(newTag) => {
                 setTags(prevTags => [...prevTags, newTag])
+              }}
+              onRemoveTag={(tagToRemove) => {
+                setTags(prevTags => prevTags.filter(t => t !== tagToRemove))
+                setSelectedTags(prevSelected => prevSelected.filter(t => t !== tagToRemove))
+                // Remove tag from all asanas
+                setAsanas(prevAsanas => prevAsanas.map(asana => ({
+                  ...asana,
+                  tags: asana.tags.filter(t => t !== tagToRemove)
+                })))
+              }}
+              onRenameTag={(oldTag, newTag) => {
+                if (!tags.includes(newTag)) {
+                  setTags(prevTags => prevTags.map(t => t === oldTag ? newTag : t))
+                  setSelectedTags(prevSelected => prevSelected.map(t => t === oldTag ? newTag : t))
+                  // Update tag in all asanas
+                  setAsanas(prevAsanas => prevAsanas.map(asana => ({
+                    ...asana,
+                    tags: asana.tags.map(t => t === oldTag ? newTag : t)
+                  })))
+                }
               }}
             />
             <div className="flex flex-wrap gap-2">
