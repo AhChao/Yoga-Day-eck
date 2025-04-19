@@ -294,7 +294,7 @@ function TagBadge({ tag, onRemove, onClick, className = '' }) {
   )
 }
 
-function FlowCard({ flow, onEdit, onDelete, asanas, availableAsanas, onUpdateFlow, isEditing }) {
+function FlowCard({ flow, onEdit, onDelete, asanas, availableAsanas, onUpdateFlow, isEditing, availableTags }) {
   const { isOver, setNodeRef } = useDroppable({
     id: `flow-${flow.id}`,
     data: {
@@ -608,17 +608,6 @@ function App() {
               </button>
             </div>
 
-            <div className="mt-8 space-y-4">
-              <button
-                onClick={activeTab === 'cards' ? addAsana : addFlow}
-                className="w-full border-2 border-dashed border-gray-300 rounded-lg p-4 h-[60px] flex items-center justify-center hover:border-gray-400 transition-colors duration-200 bg-white"
-              >
-                <PlusIcon className="h-6 w-6 text-gray-400 mr-2" />
-                <span className="text-gray-600">{activeTab === 'cards' ? 'New Asana' : 'New Flow'}</span>
-              </button>
-            </div>
-
-            {/* Tags Management */}
             <hr className="my-4 border-gray-200" />
 
             <div className="space-y-4">
