@@ -139,27 +139,46 @@ function SortableAsanaCard({ asana, isEditing, onEdit, onUpdate, onDelete, onIma
         </div>
       ) : (
         <div className="cursor-pointer">
-          <div className="flex justify-between items-start mb-2">
-            <h3 className="text-lg font-semibold">{asana.name}</h3>
-            <div className="flex gap-2">
-              <div className="cursor-pointer" onClick={() => onEdit(asana.id)}>
-                <PencilIcon className="h-5 w-5 text-gray-400" />
+          <div className="mb-4">
+            <div className="flex justify-between items-start mb-2">
+              <div>
+                <h3 className="text-lg font-semibold">{asana.name}</h3>
+                {asana.tags.length > 0 && (
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {asana.tags.map(tag => (
+                      <TagBadge
+                        key={tag}
+                        tag={tag}
+                        className="bg-blue-50 text-blue-700 text-xs"
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
-              <button {...listeners} className="p-1 rounded hover:bg-gray-100 cursor-grab active:cursor-grabbing">
-                <ArrowsUpDownIcon className="h-5 w-5 text-gray-400" />
-              </button>
+              <div className="flex gap-2">
+                <div className="cursor-pointer" onClick={() => onEdit(asana.id)}>
+                  <PencilIcon className="h-5 w-5 text-gray-400" />
+                </div>
+                <button {...listeners} className="p-1 rounded hover:bg-gray-100 cursor-grab active:cursor-grabbing">
+                  <ArrowsUpDownIcon className="h-5 w-5 text-gray-400" />
+                </button>
+                <button
+                  onClick={() => onDelete(asana.id)}
+                  className="p-1 rounded hover:bg-gray-100"
+                >
+                  <TrashIcon className="h-5 w-5 text-gray-400" />
+                </button>
+              </div>
             </div>
-          </div>
-          {asana.imageUrl && (
-            <div className="h-48 mb-2 rounded overflow-hidden">
+            {asana.imageUrl && (
               <img
                 src={asana.imageUrl}
                 alt={asana.name}
-                className="object-cover w-full h-full"
+                className="w-full h-48 object-cover rounded-lg mb-2"
               />
-            </div>
-          )}
-          <p className="text-gray-600">{asana.note}</p>
+            )}
+            <p className="text-gray-600 mt-2">{asana.note}</p>
+          </div>
         </div>
       )}
     </div>
