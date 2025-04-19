@@ -153,7 +153,7 @@ function SortableAsanaCard({ asana, isEditing, onEdit, onUpdate, onDelete, onIma
           <div className="mb-4">
             <div className="flex justify-between items-start mb-2">
               <div>
-                <h3 className="text-lg font-semibold">{asana.name}</h3>
+                <h3 className="text-xl font-semibold text-gray-600">{asana.name}</h3>
                 {asana.tags.length > 0 && (
                   <div className="mt-1 flex flex-wrap gap-1">
                     {asana.tags.map(tag => (
@@ -357,7 +357,7 @@ function FlowCard({ flow, onEdit, onDelete, asanas, availableAsanas, onUpdateFlo
     >
       <div className="flex justify-between items-start mb-4">
         <div>
-          <h3 className="text-xl font-semibold">{flow.name}</h3>
+          <h3 className="text-xl font-semibold text-gray-600">{flow.name || 'New Flow'}</h3>
           {flow.tags?.length > 0 && (
             <div className="mt-1 flex flex-wrap gap-1">
               {flow.tags.map(tag => (
@@ -605,13 +605,13 @@ function App() {
             <div className="space-y-2 mb-4">
               <button
                 onClick={() => setActiveTab('cards')}
-                className={`w-full text-left px-4 py-2 rounded-md ${activeTab === 'cards' ? 'bg-blue-50 text-blue-700' : 'bg-white text-gray-900 hover:bg-gray-50'}`}
+                className={`w-full text-left px-4 py-2 rounded-md ${activeTab === 'cards' ? 'bg-blue-50 text-blue-700' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
               >
                 Cards
               </button>
               <button
                 onClick={() => setActiveTab('flows')}
-                className={`w-full text-left px-4 py-2 rounded-md ${activeTab === 'flows' ? 'bg-blue-50 text-blue-700' : 'bg-white text-gray-900 hover:bg-gray-50'}`}
+                className={`w-full text-left px-4 py-2 rounded-md ${activeTab === 'flows' ? 'bg-blue-50 text-blue-700' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
               >
                 Flows
               </button>
@@ -622,7 +622,7 @@ function App() {
             <div className="space-y-4">
               <button
                 onClick={activeTab === 'cards' ? addAsana : addFlow}
-                className="w-full border-2 border-dashed border-gray-300 rounded-lg p-4 h-[60px] flex items-center justify-center hover:border-gray-400 transition-colors duration-200 bg-white text-gray-900"
+                className="w-full border-2 border-dashed border-gray-300 rounded-lg p-4 h-[60px] flex items-center justify-center hover:border-gray-400 transition-colors duration-200 bg-white text-gray-500"
               >
                 <PlusIcon className="h-6 w-6 text-gray-600 mr-2" />
                 <span className="text-gray-900">{activeTab === 'cards' ? 'New Asana' : 'New Flow'}</span>
@@ -637,83 +637,110 @@ function App() {
       {/* Main content */}
       <div className="md:pl-64 min-h-screen">
         <div className="w-full p-4 sm:p-6 lg:p-8">
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">{activeTab === 'cards' ? 'Asanas' : 'Flows'}</h2>
-              <div className="flex-1 max-w-xl mx-4">
-                <TagInput
-                  availableTags={activeTab === 'cards' ? asanaTags : flowTags}
-                  onCreateTag={(newTag) => {
-                    if (activeTab === 'cards') {
-                      setAsanaTags((prevTags) => [...prevTags, newTag]);
-                    } else {
-                      setFlowTags((prevTags) => [...prevTags, newTag]);
-                    }
-                  }}
-                  onRemoveTag={(tagToRemove) => {
-                    if (activeTab === 'cards') {
-                      setAsanaTags((prevTags) => prevTags.filter((t) => t !== tagToRemove));
-                      setSelectedTags((prevSelected) => prevSelected.filter((t) => t !== tagToRemove));
-                      setAsanas((prevAsanas) =>
-                        prevAsanas.map((asana) => ({
-                          ...asana,
-                          tags: asana.tags.filter((t) => t !== tagToRemove),
-                        }))
-                      );
-                    } else {
-                      setFlowTags((prevTags) => prevTags.filter((t) => t !== tagToRemove));
-                      setSelectedTags((prevSelected) => prevSelected.filter((t) => t !== tagToRemove));
-                      setFlows((prevFlows) =>
-                        prevFlows.map((flow) => ({
-                          ...flow,
-                          tags: flow.tags.filter((t) => t !== tagToRemove),
-                        }))
-                      );
-                    }
-                  }}
-                  onRenameTag={(oldTag, newTag) => {
-                    if (activeTab === 'cards') {
-                      if (!asanaTags.includes(newTag)) {
-                        setAsanaTags((prevTags) => [
-                          ...prevTags.filter((t) => t !== oldTag),
-                          newTag,
-                        ]);
-                        setSelectedTags((prevSelected) => [
-                          ...prevSelected.filter((t) => t !== oldTag),
-                          ...(prevSelected.includes(oldTag) ? [newTag] : []),
-                        ]);
+          <div className="mb-8">
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold mb-4">{activeTab === 'cards' ? 'Asanas' : 'Flows'}</h2>
+              <hr className="border-gray-600" />
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex-1 max-w-xl">
+                  <TagInput
+                    availableTags={activeTab === 'cards' ? asanaTags : flowTags}
+                    onCreateTag={(newTag) => {
+                      if (activeTab === 'cards') {
+                        setAsanaTags((prevTags) => [...prevTags, newTag]);
+                      } else {
+                        setFlowTags((prevTags) => [...prevTags, newTag]);
+                      }
+                    }}
+                    onRemoveTag={(tagToRemove) => {
+                      if (activeTab === 'cards') {
+                        setAsanaTags((prevTags) => prevTags.filter((t) => t !== tagToRemove));
+                        setSelectedTags((prevSelected) => prevSelected.filter((t) => t !== tagToRemove));
                         setAsanas((prevAsanas) =>
                           prevAsanas.map((asana) => ({
                             ...asana,
-                            tags: asana.tags.map((t) => (t === oldTag ? newTag : t)),
+                            tags: asana.tags.filter((t) => t !== tagToRemove),
                           }))
                         );
-                      }
-                    } else {
-                      if (!flowTags.includes(newTag)) {
-                        setFlowTags((prevTags) => [
-                          ...prevTags.filter((t) => t !== oldTag),
-                          newTag,
-                        ]);
-                        setSelectedTags((prevSelected) => [
-                          ...prevSelected.filter((t) => t !== oldTag),
-                          ...(prevSelected.includes(oldTag) ? [newTag] : []),
-                        ]);
+                      } else {
+                        setFlowTags((prevTags) => prevTags.filter((t) => t !== tagToRemove));
+                        setSelectedTags((prevSelected) => prevSelected.filter((t) => t !== tagToRemove));
                         setFlows((prevFlows) =>
                           prevFlows.map((flow) => ({
                             ...flow,
-                            tags: flow.tags.map((t) => (t === oldTag ? newTag : t)),
+                            tags: flow.tags.filter((t) => t !== tagToRemove),
                           }))
                         );
                       }
-                    }
-                  }}
-                  value={selectedTags}
-                  onChange={setSelectedTags}
-                />
+                    }}
+                    onRenameTag={(oldTag, newTag) => {
+                      if (activeTab === 'cards') {
+                        if (!asanaTags.includes(newTag)) {
+                          setAsanaTags((prevTags) => [
+                            ...prevTags.filter((t) => t !== oldTag),
+                            newTag,
+                          ]);
+                          setSelectedTags((prevSelected) => [
+                            ...prevSelected.filter((t) => t !== oldTag),
+                            ...(prevSelected.includes(oldTag) ? [newTag] : []),
+                          ]);
+                          setAsanas((prevAsanas) =>
+                            prevAsanas.map((asana) => ({
+                              ...asana,
+                              tags: asana.tags.map((t) => (t === oldTag ? newTag : t)),
+                            }))
+                          );
+                        }
+                      } else {
+                        if (!flowTags.includes(newTag)) {
+                          setFlowTags((prevTags) => [
+                            ...prevTags.filter((t) => t !== oldTag),
+                            newTag,
+                          ]);
+                          setSelectedTags((prevSelected) => [
+                            ...prevSelected.filter((t) => t !== oldTag),
+                            ...(prevSelected.includes(oldTag) ? [newTag] : []),
+                          ]);
+                          setFlows((prevFlows) =>
+                            prevFlows.map((flow) => ({
+                              ...flow,
+                              tags: flow.tags.map((t) => (t === oldTag ? newTag : t)),
+                            }))
+                          );
+                        }
+                      }
+                    }}
+                    value={selectedTags}
+                    onChange={setSelectedTags}
+                  />
+                </div>
+              </div>
+
+              <hr className="border-gray-600 my-4" />
+
+              <div className="space-y-4">
+                <div className="flex flex-wrap gap-2">
+                  {(activeTab === 'cards' ? asanaTags : flowTags).map(tag => (
+                    <button
+                      key={tag}
+                      onClick={() => {
+                        if (selectedTags.includes(tag)) {
+                          setSelectedTags(selectedTags.filter(t => t !== tag));
+                        } else {
+                          setSelectedTags([...selectedTags, tag]);
+                        }
+                      }}
+                      className={`px-2 py-1 rounded-md text-sm ${selectedTags.includes(tag) ? 'bg-blue-500 text-white' : 'bg-blue-100 text-blue-800'} hover:bg-blue-200`}
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
-            <hr className="border-gray-600" />
           </div>
 
           {activeTab === 'cards' ? (
