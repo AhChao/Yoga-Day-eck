@@ -5,9 +5,13 @@ import {
   XMarkIcon,
   PlusIcon,
   PencilIcon,
+  PencilSquareIcon,
   TrashIcon,
   ArrowsUpDownIcon,
   ClockIcon,
+  ArrowUpTrayIcon,
+  ArrowDownTrayIcon,
+  ArrowDownIcon,
 } from '@heroicons/react/24/outline'
 import { DndContext, useSensors, useSensor, PointerSensor, KeyboardSensor, closestCenter, useDraggable, useDroppable } from '@dnd-kit/core'
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable'
@@ -295,6 +299,36 @@ function TagBadge({ tag, onRemove, onClick, className = '' }) {
 }
 
 function FlowCard({ flow, onEdit, onDelete, asanas, availableAsanas, onUpdateFlow, isEditing, availableTags }) {
+  const [selectedAsana, setSelectedAsana] = useState('');
+  const [selectedTag, setSelectedTag] = useState('');
+  const [editedFlow, setEditedFlow] = useState(flow);
+  const [originalFlow, setOriginalFlow] = useState(flow);
+
+  // Keep editedFlow and originalFlow in sync with flow
+  useEffect(() => {
+    setEditedFlow(flow);
+    setOriginalFlow(flow);
+  }, [flow]);
+
+  const handleChange = (changes) => {
+    const updatedFlow = { ...editedFlow, ...changes };
+    setEditedFlow(updatedFlow);
+  };
+
+  const handleSave = () => {
+    onUpdateFlow(flow.id, editedFlow);
+    onEdit();
+  };
+
+  const handleCancel = () => {
+    setEditedFlow(originalFlow);
+    onEdit();
+  };
+
+  const handleEdit = () => {
+    onEdit();
+  };
+
   const { isOver, setNodeRef } = useDroppable({
     id: `flow-${flow.id}`,
     data: {
@@ -305,38 +339,183 @@ function FlowCard({ flow, onEdit, onDelete, asanas, availableAsanas, onUpdateFlo
 
   if (isEditing) {
     return (
-      <div className="p-4 bg-white rounded-lg shadow space-y-4">
+      <div className="p-4 bg-white rounded-lg shadow space-y-4" ref={setNodeRef}>
+        {/* Name and Description Section */}
         <div className="space-y-4">
-          <input
-            type="text"
-            value={flow.name}
-            onChange={(e) => onUpdateFlow(flow.id, { name: e.target.value })}
-            className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-            placeholder="Flow name"
-          />
-          <div className="flex gap-2">
-            <input
-              type="number"
-              value={flow.duration}
-              onChange={(e) => onUpdateFlow(flow.id, { duration: parseInt(e.target.value) || 0 })}
-              className="block w-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-              placeholder="Duration"
-              min="0"
-            />
-            <span className="self-center text-gray-500">minutes</span>
+          <div className="flex justify-between items-start">
+            <div className="space-y-2">
+              {isEditing ? (
+                <input
+                  type="text"
+                  value={editedFlow.name}
+                  onChange={(e) => handleChange({ name: e.target.value })}
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  placeholder="Flow name"
+                />
+              ) : (
+                <h3 className="text-lg font-medium text-gray-900">{flow.name}</h3>
+              )}
+              <div className="flex items-center gap-2 text-gray-500">
+                <ClockIcon className="h-4 w-4" />
+                {isEditing ? (
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      min="0"
+                      value={editedFlow.duration}
+                      onChange={(e) => handleChange({ duration: parseInt(e.target.value) || 0 })}
+                      className="block w-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      placeholder="Duration"
+                    />
+                    <span className="self-center">minutes</span>
+                  </div>
+                ) : (
+                  <span>{flow.duration} minutes</span>
+                )}
+              </div>
+            </div>
+            <div className="flex gap-2">
+              {isEditing ? (
+                <>
+                  <button
+                    onClick={handleSave}
+                    className="px-3 py-1.5 text-sm font-medium text-white bg-blue-500 rounded hover:bg-blue-600"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={handleCancel}
+                    className="px-3 py-1.5 text-sm font-medium text-gray-500 hover:text-gray-700"
+                  >
+                    Cancel
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={handleEdit}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <PencilSquareIcon className="h-5 w-5" />
+                  </button>
+                  <button
+                    onClick={() => onDelete(flow.id)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <TrashIcon className="h-5 w-5" />
+                  </button>
+                </>
+              )}
+            </div>
           </div>
-          <textarea
-            value={flow.description}
-            onChange={(e) => onUpdateFlow(flow.id, { description: e.target.value })}
-            className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-            placeholder="Flow description"
-            rows={3}
-          />
-          <TagInput
-            value={flow.tags}
-            availableTags={availableTags}
-            onChange={(newTags) => onUpdateFlow(flow.id, { tags: newTags })}
-          />
+          {isEditing ? (
+            <textarea
+              value={editedFlow.description}
+              onChange={(e) => handleChange({ description: e.target.value })}
+              className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+              placeholder="Flow description"
+              rows={3}
+            />
+          ) : (
+            <p className="text-gray-600">{flow.description}</p>
+          )}
+        </div>
+        {/* Tags Section */}
+        <div className="space-y-4 mb-6">
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">Tags</label>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {flow.tags?.map(tag => (
+                <TagBadge
+                  key={tag}
+                  tag={tag}
+                  onRemove={isEditing ? () => {
+                    const updatedTags = flow.tags.filter(t => t !== tag);
+                    onUpdateFlow({ ...flow, tags: updatedTags });
+                  } : undefined}
+                />
+              ))}
+            </div>
+            {isEditing && (
+              <select
+                className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-600"
+                value={selectedTag}
+                onChange={(e) => {
+                  if (e.target.value) {
+                    const updatedTags = [...(flow.tags || []), e.target.value];
+                    onUpdateFlow({ ...flow, tags: updatedTags });
+                    setSelectedTag('');
+                  }
+                }}
+              >
+                <option value="">Add a tag...</option>
+                {availableTags.filter(tag => !flow.tags?.includes(tag)).map(tag => (
+                  <option key={tag} value={tag}>{tag}</option>
+                ))}
+              </select>
+            )}
+          </div>
+        </div>
+
+        {/* Asanas Section */}
+        <div className="space-y-4">
+          <div className="flex flex-col gap-2">
+            {flow.asanaIds.map((asanaId, index) => {
+              const asana = asanas.find(a => a.id === asanaId);
+              if (!asana) return null;
+              return (
+                <div key={`${asanaId}-${index}`} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-400 font-medium">{index + 1}.</span>
+                    <div>
+                      <div className="font-medium text-gray-600">{asana.name}</div>
+                      {asana.tags?.length > 0 && (
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {asana.tags.map(tag => (
+                            <TagBadge
+                              key={tag}
+                              tag={tag}
+                              className="bg-blue-50 text-blue-700 text-xs"
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {isEditing && (
+                    <button
+                      onClick={() => {
+                        const updatedAsanaIds = [...flow.asanaIds];
+                        updatedAsanaIds.splice(index, 1);
+                        onUpdateFlow({ ...flow, asanaIds: updatedAsanaIds });
+                      }}
+                      className="text-red-600 hover:text-red-900"
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          {isEditing && (
+            <select
+              className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-600"
+              value={selectedAsana}
+              onChange={(e) => {
+                if (e.target.value) {
+                  const updatedAsanaIds = [...flow.asanaIds, e.target.value];
+                  onUpdateFlow({ ...flow, asanaIds: updatedAsanaIds });
+                  setSelectedAsana('');
+                }
+              }}
+            >
+              <option value="">Add an asana...</option>
+              {asanas.map(asana => (
+                <option key={asana.id} value={asana.id}>{asana.name}</option>
+              ))}
+            </select>
+          )}
         </div>
         <div className="flex justify-end gap-2">
           <button
@@ -374,53 +553,125 @@ function FlowCard({ flow, onEdit, onDelete, asanas, availableAsanas, onUpdateFlo
         <div className="flex gap-2">
           <button
             onClick={() => onEdit(flow.id)}
-            className="p-1 rounded hover:bg-gray-100"
+            className="text-gray-600 hover:text-gray-900"
           >
-            <PencilIcon className="h-5 w-5 text-gray-400" />
+            <PencilSquareIcon className="h-5 w-5" />
           </button>
           <button
             onClick={() => onDelete(flow.id)}
-            className="p-1 rounded hover:bg-gray-100"
+            className="text-red-600 hover:text-red-900"
           >
-            <TrashIcon className="h-5 w-5 text-gray-400" />
+            <TrashIcon className="h-5 w-5" />
           </button>
         </div>
       </div>
-      <p className="text-gray-600 mb-4">{flow.description}</p>
-      <div className="space-y-2">
-        {flow.asanaIds.map((asanaId, index) => {
-          const asana = asanas.find(a => a.id === asanaId)
-          if (!asana) return null
-          return (
-            <div key={asanaId} className="flex items-center gap-2">
-              <div className="text-gray-400">{index + 1}.</div>
-              <div className="flex-1 p-2 bg-gray-50 rounded">
-                <div className="font-medium">{asana.name}</div>
-                {asana.tags?.length > 0 && (
-                  <div className="mt-1 flex flex-wrap gap-1">
-                    {asana.tags.map(tag => (
-                      <TagBadge
-                        key={tag}
-                        tag={tag}
-                        className="bg-blue-50 text-blue-700 text-xs"
-                      />
-                    ))}
+      {/* Tags Section */}
+      <div className="space-y-4 mb-6">
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">Tags</label>
+          <div className="flex flex-wrap gap-2 mb-2">
+            {flow.tags?.map(tag => (
+              <TagBadge
+                key={tag}
+                tag={tag}
+                onRemove={isEditing ? () => {
+                  const updatedTags = editedFlow.tags.filter(t => t !== tag);
+                  handleChange({ tags: updatedTags });
+                } : undefined}
+              />
+            ))}
+          </div>
+          {isEditing && (
+            <select
+              className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-600"
+              value={selectedTag}
+              onChange={(e) => {
+                if (e.target.value) {
+                  const updatedTags = [...(editedFlow.tags || []), e.target.value];
+                  handleChange({ tags: updatedTags });
+                  setSelectedTag('');
+                }
+              }}
+            >
+              <option value="">Add a tag...</option>
+              {availableTags?.filter(tag => !flow.tags?.includes(tag)).map(tag => (
+                <option key={tag} value={tag}>{tag}</option>
+              ))}
+            </select>
+          )}
+        </div>
+      </div>
+
+      {/* Asanas Section */}
+      <div className="space-y-4">
+        <div className="flex flex-col gap-3">
+          {flow.asanaIds?.map((asanaId, index) => {
+            const asana = asanas.find(a => a.id === asanaId);
+            if (!asana) return null;
+            const nextAsana = index < flow.asanaIds.length - 1 
+              ? asanas.find(a => a.id === flow.asanaIds[index + 1])
+              : null;
+            
+            return (
+              <div key={`${asanaId}-${index}`} className="space-y-1">
+                <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-400 font-medium">{index + 1}.</span>
+                    <div>
+                      <div className="font-medium text-gray-600">{asana.name}</div>
+                      {asana.tags?.length > 0 && (
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {asana.tags.map(tag => (
+                            <TagBadge
+                              key={tag}
+                              tag={tag}
+                              className="bg-blue-50 text-blue-700 text-xs"
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {isEditing && (
+                    <button
+                      onClick={() => {
+                        const updatedAsanaIds = [...flow.asanaIds];
+                        updatedAsanaIds.splice(index, 1);
+                        onUpdateFlow({ ...flow, asanaIds: updatedAsanaIds });
+                      }}
+                      className="text-red-600 hover:text-red-900"
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+                {nextAsana && (
+                  <div className="flex items-center pl-6">
+                    <ArrowDownIcon className="h-4 w-4 text-gray-400" />
                   </div>
                 )}
               </div>
-              <button
-                onClick={() => {
-                  onUpdateFlow(flow.id, {
-                    asanaIds: flow.asanaIds.filter(id => id !== asanaId)
-                  })
-                }}
-                className="p-1 rounded hover:bg-gray-100"
-              >
-                <XMarkIcon className="h-5 w-5 text-gray-400" />
-              </button>
-            </div>
-          )
-        })}
+            );
+          })}
+        </div>
+        {isEditing && (
+          <select
+            className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-600"
+            value={selectedAsana}
+            onChange={(e) => {
+              if (e.target.value) {
+                const updatedAsanaIds = [...(editedFlow.asanaIds || []), e.target.value];
+                handleChange({ asanaIds: updatedAsanaIds });
+                setSelectedAsana('');
+              }
+            }}
+          >
+            <option value="">Add an asana...</option>
+            {asanas?.map(asana => (
+              <option key={asana.id} value={asana.id}>{asana.name}</option>
+            ))}
+          </select>
+        )}
       </div>
     </div>
   )
@@ -456,8 +707,17 @@ function App() {
     return savedTags ? JSON.parse(savedTags) : []
   })
   const [selectedTags, setSelectedTags] = useState([])
-  const [editingAsanaId, setEditingAsanaId] = useState(null)
   const [editingFlowId, setEditingFlowId] = useState(null)
+  const [editingAsanaId, setEditingAsanaId] = useState(null)
+
+  // Handle flow edit state
+  const handleFlowEdit = (flowId) => {
+    setEditingFlowId(flowId);
+  };
+
+  const handleFlowSave = () => {
+    setEditingFlowId(null);
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -481,6 +741,48 @@ function App() {
   useEffect(() => {
     localStorage.setItem('flowTags', JSON.stringify(flowTags))
   }, [flowTags])
+
+  const handleExport = () => {
+    const exportData = {
+      asanas: asanas.map(({ id, name, description, tags, duration }) => ({
+        id, name, description, tags, duration
+      })),
+      flows: flows.map(({ id, name, description, tags, duration, asanaIds }) => ({
+        id, name, description, tags, duration, asanaIds
+      })),
+      asanaTags,
+      flowTags
+    };
+    
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'yoga-data.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImport = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const importData = JSON.parse(e.target.result);
+          setAsanas(importData.asanas);
+          setFlows(importData.flows);
+          setAsanaTags(importData.asanaTags);
+          setFlowTags(importData.flowTags);
+        } catch (error) {
+          console.error('Error importing data:', error);
+        }
+      };
+      reader.readAsText(file);
+    }
+  };
 
   const handleDragEnd = (event) => {
     const { active, over } = event
@@ -532,15 +834,13 @@ function App() {
       tags: [],
       asanaIds: []
     }
-    setFlows([...flows, newFlow])
+    setFlows(flows => [...flows, newFlow])
     setEditingFlowId(newFlow.id)
   }
 
-  const updateFlow = (id, updates) => {
-    setFlows(flows.map(flow =>
-      flow.id === id ? { ...flow, ...updates } : flow
-    ))
-  }
+  const updateFlow = (flowId, updates) => {
+    setFlows(flows => flows.map(f => f.id === flowId ? { ...f, ...updates } : f));
+  };
 
   const deleteFlow = (id) => {
     setFlows(flows.filter(flow => flow.id !== id))
@@ -627,6 +927,28 @@ function App() {
                 <PlusIcon className="h-6 w-6 text-gray-600 mr-2" />
                 <span className="text-gray-900">{activeTab === 'cards' ? 'New Asana' : 'New Flow'}</span>
               </button>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={handleExport}
+                  className="flex-1 px-4 py-2 bg-green-50 text-green-700 rounded-md hover:bg-green-100 transition-colors duration-200 flex items-center justify-center"
+                >
+                  <ArrowUpTrayIcon className="h-5 w-5 mr-2" />
+                  Export
+                </button>
+                <label className="flex-1">
+                  <input
+                    type="file"
+                    accept=".json"
+                    onChange={handleImport}
+                    className="hidden"
+                  />
+                  <div className="w-full px-4 py-2 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 transition-colors duration-200 flex items-center justify-center cursor-pointer">
+                    <ArrowDownTrayIcon className="h-5 w-5 mr-2" />
+                    Import
+                  </div>
+                </label>
+              </div>
             </div>
 
 
@@ -777,11 +1099,11 @@ function App() {
                   <FlowCard
                     key={flow.id}
                     flow={flow}
-                    onEdit={setEditingFlowId}
+                    onEdit={handleFlowEdit}
                     onDelete={deleteFlow}
                     asanas={asanas}
-                    availableAsanas={asanas.filter(asana => !flow.asanaIds.includes(asana.id))}
-                    onUpdateFlow={updateFlow}
+                    availableAsanas={asanas.filter(asana => !flow.asanaIds?.includes(asana.id))}
+                    onUpdateFlow={(flowId, updates) => updateFlow(flowId, updates)}
                     isEditing={editingFlowId === flow.id}
                     availableTags={flowTags}
                   />
