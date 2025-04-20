@@ -1,12 +1,81 @@
-# React + Vite
+# Yoga Day Eck
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+[![Live Demo](https://img.shields.io/badge/live-demo-blue)](https://ahchao.github.io/Yoga-Day-eck)
 
-Currently, two official plugins are available:
+A modern yoga practice planning application built with React and Vite.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Features
 
-## Expanding the ESLint configuration
+- Create and manage yoga flows
+- Add and organize asanas (yoga poses)
+- Tag system for categorizing flows and asanas
+- Export functionality for backup and sharing
+- Drag and drop interface for easy flow creation
+- Real-time editing with save/cancel functionality
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### Asana Management
+
+- Add new asanas with descriptions and tags
+- Organize asanas using a tag system
+- View and edit existing asanas
+- Drag and drop asanas between flows
+
+### Flow Management
+
+- Create new yoga flows
+- Add multiple asanas to a flow
+- Edit flow details (name, description, tags)
+- Real-time preview of flow sequence
+- Save and cancel editing options
+- Export flows for backup
+
+## Tech Stack
+
+- React 18
+- Vite
+- TypeScript
+- Tailwind CSS
+- React DnD
+- React Icons
+
+## Getting Started
+
+1. Clone the repository:
+```bash
+git clone https://github.com/AhChao/Yoga-Day-eck.git
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Start the development server:
+```bash
+npm run dev
+```
+
+4. Build for production:
+```bash
+npm run build
+```
+
+## Project Structure
+
+```
+src/
+├── components/     # Reusable React components
+├── App.jsx         # Main application component
+├── index.css       # Global styles
+└── main.jsx        # Entry point
+```
+
+## Deployment
+
+The application is deployed at:
+- GitHub Pages: [https://ahchao.github.io/Yoga-Day-eck](https://ahchao.github.io/Yoga-Day-eck)
+- Netlify: [https://yoga-day-eck.netlify.app](https://yoga-day-eck.netlify.app)
+
+## License
+
+MIT
