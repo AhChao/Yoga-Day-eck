@@ -2,13 +2,13 @@
   "name": "Yoga Day Eck",
   "short_name": "Yoga Day Eck",
   "description": "A modern yoga practice planning application",
-  "start_url": "/Yoga-Day-eck/",
+  "start_url": "/Yoga-Day-eck/index.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#000000",
   "icons": [
     {
-      "src": "/vite.svg",
+      "src": "vite.svg",
       "sizes": "48x48",
       "type": "image/svg+xml"
     }
