@@ -72,9 +72,10 @@ src/
 
 ## Deployment
 
-The application is deployed at:
-- GitHub Pages: [https://ahchao.github.io/Yoga-Day-eck](https://ahchao.github.io/Yoga-Day-eck)
-- Netlify: [https://yoga-day-eck.netlify.app](https://yoga-day-eck.netlify.app)
+The application is hosted on GitHub Pages at:
+- [https://ahchao.github.io/Yoga-Day-eck](https://ahchao.github.io/Yoga-Day-eck)
+
+The deployment is automated through GitHub Actions, which builds and deploys the application whenever changes are pushed to the main branch.
 
 ## License
 
